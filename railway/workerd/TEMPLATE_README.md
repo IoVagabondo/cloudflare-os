@@ -57,6 +57,7 @@ simulated, and inbound Cloudflare Email Routing is unavailable.
 |---|---:|---|
 | `LAB_AUTH_USERNAME` | yes | `lab`; outer HTTP Basic username |
 | `LAB_AUTH_PASSWORD` | yes | `${{secret(32)}}`; generated outer HTTP Basic password |
+| `PORT` | yes | `3000`; must match the Railway domain target port |
 | `PUBLIC_BASE_URL` | yes | `https://${{RAILWAY_PUBLIC_DOMAIN}}`; public callback origin |
 | `WORKERD_INTERNAL_PORT` | yes | `8787`; private loopback workerd listener |
 | `WORKERD_PERSIST_PATH` | yes | `/data`; must match the volume mount |

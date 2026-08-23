@@ -22,6 +22,7 @@ export default defineRailway(() => {
     env: {
       LAB_AUTH_USERNAME: "lab",
       LAB_AUTH_PASSWORD: preserve(),
+      PORT: "3000",
       PUBLIC_BASE_URL: preserve(),
       WORKERD_INTERNAL_PORT: "8787",
       WORKERD_PERSIST_PATH: "/data",
