@@ -1,4 +1,13 @@
-**
-!Dockerfile
-!railway/
-!railway/**
+.git
+.dev.vars
+.env
+.env.*
+.run-local-stamp
+.wrangler
+**/.wrangler
+node_modules
+**/node_modules
+dist
+**/dist
+release-out
+*.log

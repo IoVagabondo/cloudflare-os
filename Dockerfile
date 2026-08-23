@@ -1,39 +1,43 @@
 FROM node:24.19.0-bookworm-slim
 
-ARG CLOUDFLARE_OS_STARTER_REF=3d211477ad009e13a98d863d843e5c12a29ad02b
-
 ENV PNPM_HOME=/pnpm
 ENV PATH=/pnpm:$PATH
+ENV CI=true
+ENV NODE_ENV=production
+ENV WRANGLER_SEND_METRICS=false
+ENV CHROME_PATH=/usr/bin/chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV HOME=/tmp/workerd-home
+ENV PORT=3000
+ENV WORKERD_INTERNAL_PORT=8787
+ENV WORKERD_PERSIST_PATH=/data
 
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends ca-certificates git \
+    && apt-get install --yes --no-install-recommends \
+      ca-certificates \
+      chromium \
+      fonts-liberation \
+      fonts-noto-color-emoji \
+      gosu \
+      tini \
     && rm -rf /var/lib/apt/lists/* \
     && corepack enable
 
-WORKDIR /opt/cloudflare-os-starter
+WORKDIR /app
+COPY . .
 
-# The official starter is the production deployment contract. Pinning the commit makes the build
-# reproducible and prevents an unreviewed upstream change from silently changing the trust boundary.
-RUN git init \
-    && git remote add origin https://github.com/cloudflare/cloudflare-os-starter.git \
-    && git fetch --depth 1 origin "$CLOUDFLARE_OS_STARTER_REF" \
-    && git checkout --detach FETCH_HEAD \
-    && git submodule update --init --depth 1
-
+# The image carries the exact lockfile-pinned Wrangler and workerd versions. Generated UI and
+# frontend artifacts are baked once here; runtime startup only generates binding configs and lets
+# Wrangler bundle the immutable Worker sources.
 RUN pnpm install --frozen-lockfile \
-    && pnpm --dir cloudflare-os install --frozen-lockfile
-
-COPY railway/operator.mjs /opt/railway-operator/operator.mjs
-
-ENV CLOUDFLARE_OS_STARTER_DIR=/opt/cloudflare-os-starter
-ENV CLOUDFLARE_OS_STARTER_REF=$CLOUDFLARE_OS_STARTER_REF
-ENV NODE_ENV=production
-ENV PORT=3000
-
-RUN chown -R node:node /opt/cloudflare-os-starter /opt/railway-operator
-
-USER node
+    && pnpm --filter @gadgets/typed-storage build \
+    && pnpm --filter @gadgets/workshop-frontend exec vite build \
+    && node packages/workshop-backend/scripts/build-format-blueprints.mjs \
+    && pnpm exec vp run -r --cache build:configurator --dev \
+    && pnpm exec vp run -r --cache build:app:dev \
+    && chmod 0755 railway/workerd/entrypoint.sh \
+    && chown -R node:node /app
 
 EXPOSE 3000
 
-CMD ["node", "/opt/railway-operator/operator.mjs"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/app/railway/workerd/entrypoint.sh"]

@@ -24,6 +24,11 @@ Railway-hosted equivalents.
 
 ### Stage B0: compatibility proof
 
+**Implementation status:** in progress on the `railway-workerd` branch. The container, persistent
+Wrangler launch mode, authenticated HTTP/WebSocket supervisor, and Railway IaC are implemented under
+`railway/workerd/`. Runtime, restart, and volume acceptance evidence must be recorded before this
+status is promoted beyond experimental.
+
 Package the repository's existing multi-Worker local topology in one Railway service:
 
 - Build all required Worker and frontend artifacts at image-build time.

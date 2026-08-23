@@ -3,9 +3,9 @@
 > [!NOTE]
 > This community fork adds Railway deployment tooling and is not affiliated with or endorsed by
 > Cloudflare or Railway. The production-oriented [Cloudflare OS Operator](railway/TEMPLATE_README.md)
-> runs on Railway and deploys a pinned official release into your Cloudflare account. A separate
-> [workerd-on-Railway experiment](railway/WORKERD_TEMPLATE_PLAN.md) remains a private portability
-> project until its persistence and security acceptance gates pass.
+> runs on Railway and deploys a pinned official release into your Cloudflare account. The separate
+> [Cloudflare OS Workerd Lab](railway/workerd/TEMPLATE_README.md) runs the Workers directly on
+> Railway, but remains experimental until its persistence and security acceptance gates pass.
 
 Cloudflare OS is an "operating system" for AI productivity originally developed for use inside Cloudflare. A large portion of Cloudflare's workforce -- from engineering to sales and everything in between -- uses Cloudflare OS every day to help them do their jobs.
 

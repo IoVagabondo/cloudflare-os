@@ -7,6 +7,10 @@
 //   --use-workers-ai-binding   Include the Workers AI binding in
 //                               workshop-backend (requires Cloudflare login).
 //   --port PORT                 Listen on PORT instead of 8787. Overrides VITE_BACKEND_HOST.
+//   --ip IP                     Bind Wrangler to this address (defaults to Wrangler's localhost).
+//   --persist-to PATH           Store local binding state under PATH.
+//   --skip-preflight-builds     Trust that generated assets were built before startup.
+//   --no-watchers               Do not start generated-asset rebuild watchers.
 //
 // Env:
 //   VITE_BACKEND_HOST=localhost:9000  Also pass --port 9000 to wrangler dev.
@@ -62,6 +66,30 @@ function loadDevVars(): void {
 loadDevVars();
 
 const useWorkersAi = process.argv.includes("--use-workers-ai-binding");
+const skipPreflightBuilds = process.argv.includes("--skip-preflight-builds");
+const disableDevWatchers = process.argv.includes("--no-watchers");
+
+function readSingleOption(name: string): string | null {
+  let value: string | null = null;
+  for (let i = 2; i < process.argv.length; i++) {
+    const arg = process.argv[i];
+    if (arg !== name && !arg.startsWith(`${name}=`)) continue;
+    if (value !== null) throw new Error(`${name} may only be specified once.`);
+    value = arg === name ? process.argv[++i] : arg.slice(name.length + 1);
+    if (!value) throw new Error(`${name} requires a non-empty value.`);
+  }
+  return value;
+}
+
+let wranglerIp: string | null;
+let persistTo: string | null;
+try {
+  wranglerIp = readSingleOption("--ip");
+  persistTo = readSingleOption("--persist-to");
+} catch (err) {
+  console.error((err as Error).message);
+  process.exit(1);
+}
 
 // In `run-local` mode the backend serves the pre-built frontend bundle as static assets (there is no
 // Vite dev server). In normal dev mode we leave assets unconfigured so the frontend is served by
@@ -262,34 +290,38 @@ function runBuild(label: string, command: string, args: string[], cwd: string): 
 // `build:app:dev` rather than `build:app`: the app watchers cannot skip their own initial build, so
 // this output is rebuilt regardless, and unless the bytes match Wrangler sees `src/generated/app.txt`
 // change and restarts the worker. Same build, unminified.
-try {
-  await Promise.all([
-    runBuild(
-      "format blueprints",
-      process.execPath,
-      [join(WORKSHOP_BACKEND_DIR, "scripts", "build-format-blueprints.mjs")],
-      WORKSHOP_BACKEND_DIR,
-    ),
-    runBuild("configurator UIs",
-        ...pnpmCommand(["exec", "vp", "run", "-r", "--cache", "build:configurator", "--dev"]), ROOT),
-    runBuild("gatekeeper app UIs",
-        ...pnpmCommand(["exec", "vp", "run", "-r", "--cache", "build:app:dev"]), ROOT),
-  ]);
-} catch (err) {
-  // The SIGTERM handler killing the builds also lands here, as the rejection of whichever build
-  // died first. The handler owns teardown and the exit code (143), so park and let it exit.
-  if (stoppingPreflightBuilds) await new Promise(() => {});
-  console.error((err as Error).message);
-  // The siblings of the build that failed are still running. Left alone they would outlive this
-  // process, writing their outputs after startup has reported failure and colliding with an
-  // immediate re-run.
-  await stopPreflightBuilds();
-  process.exit(1);
+if (skipPreflightBuilds) {
+  console.log("Skipping pre-flight generated-asset builds; using image-baked outputs.");
+} else {
+  try {
+    await Promise.all([
+      runBuild(
+        "format blueprints",
+        process.execPath,
+        [join(WORKSHOP_BACKEND_DIR, "scripts", "build-format-blueprints.mjs")],
+        WORKSHOP_BACKEND_DIR,
+      ),
+      runBuild("configurator UIs",
+          ...pnpmCommand(["exec", "vp", "run", "-r", "--cache", "build:configurator", "--dev"]), ROOT),
+      runBuild("gatekeeper app UIs",
+          ...pnpmCommand(["exec", "vp", "run", "-r", "--cache", "build:app:dev"]), ROOT),
+    ]);
+  } catch (err) {
+    // The SIGTERM handler killing the builds also lands here, as the rejection of whichever build
+    // died first. The handler owns teardown and the exit code (143), so park and let it exit.
+    if (stoppingPreflightBuilds) await new Promise(() => {});
+    console.error((err as Error).message);
+    // The siblings of the build that failed are still running. Left alone they would outlive this
+    // process, writing their outputs after startup has reported failure and colliding with an
+    // immediate re-run.
+    await stopPreflightBuilds();
+    process.exit(1);
+  }
 }
 
 // Watchers start only after those builds finish. Both watch modes run a full build before they
 // begin watching, so starting one earlier would put two processes on the same src/generated files.
-for (const gk of gatekeepers) {
+for (const gk of disableDevWatchers ? [] : gatekeepers) {
   // Configurator UI (compiled by build-gatekeeper-configurator.ts). The pre-flight already ran this
   // same build, so each watcher's own initial build is a no-op write -- and it is what keeps the
   // watcher self-contained: it reads the sources itself, immediately before it starts watching them,
@@ -439,7 +471,9 @@ for (const gk of gatekeepers) {
   const config = parse(readFileSync(srcPath, "utf8"));
   config.build = devBuildConfig(config.build, gk.dir);
   config.vars = config.vars || {};
-  config.vars.BASE_URL = `http://${backendHost}/gatekeeper/${gk.name.slice("gatekeeper-".length)}`;
+  const publicBaseUrl = process.env.PUBLIC_BASE_URL?.trim().replace(/\/$/, "") ||
+    `http://${backendHost}`;
+  config.vars.BASE_URL = `${publicBaseUrl}/gatekeeper/${gk.name.slice("gatekeeper-".length)}`;
 
   const shared = SHARED_GATEKEEPER_CREDS[gk.name];
   if (shared && process.env[shared.id] && process.env[shared.secret]) {
@@ -551,6 +585,8 @@ if (wranglerPort) {
       "VITE_BACKEND_HOST did not include a port, so run-dev-server.ts could not derive " +
       "a Wrangler --port override.");
 }
+if (wranglerIp) args.push("--ip", wranglerIp);
+if (persistTo) args.push("--persist-to", persistTo);
 console.log(`\nStarting: wrangler dev ${args.join(" ")}\n`);
 
 // Reached directly for the same reason the generated custom builds are; falls back to `pnpm exec` if
