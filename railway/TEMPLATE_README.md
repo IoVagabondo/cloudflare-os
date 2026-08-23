@@ -34,7 +34,7 @@ No Cloudflare deployment runs automatically. Operations are serialized, subproce
 
 ### Why Cloudflare Access is required
 
-The official starter's production trust boundary verifies the Access JWT inside the Workshop. Configure an Allow policy for the intended users before deploying. The template needs the Access issuer (`https://<team>.cloudflareaccess.com`) and the application's audience tag. A broad Everyone or Bypass policy defeats that boundary.
+The official starter's production trust boundary verifies the Access JWT inside the Workshop. Configure an Allow policy for the intended users before deploying. The template needs the Access issuer (`https://YOUR-TEAM.cloudflareaccess.com`) and the application's audience tag. A broad Everyone or Bypass policy defeats that boundary.
 
 ## Template Variables
 
@@ -78,10 +78,10 @@ The Railway project is described by `.railway/railway.ts`, using Railway's curre
 Build a private demo project first, then create a draft from its production environment:
 
 ```bash
-railway templates create --project <project-id> --environment production --json
-railway templates publish <template-id> \
+railway templates create --project YOUR_PROJECT_ID --environment production --json
+railway templates publish YOUR_TEMPLATE_ID \
   --category AI/ML \
-  --description "Securely validate, deploy, and upgrade a pinned Cloudflare OS release in your own Cloudflare account." \
+  --description "Deploy and upgrade Cloudflare OS from a secure Railway operator console." \
   --readme-file railway/TEMPLATE_README.md
 ```
 
