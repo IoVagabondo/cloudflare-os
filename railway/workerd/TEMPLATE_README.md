@@ -39,6 +39,9 @@ runtime and Wrangler local mode does not provide Cloudflare's production isolati
 
 ## Dependencies for Cloudflare OS Workerd Lab Hosting
 
+This deployment depends on Railway for the container, TLS endpoint, and persistent state, while AI
+and OAuth providers remain configured by the deployment operator.
+
 ### Deployment Dependencies
 
 - A Railway account capable of building the large Cloudflare OS image.
@@ -68,9 +71,38 @@ simulated, and inbound Cloudflare Email Routing is unavailable.
 | `GOOGLE_CLIENT_SECRET` | no | Optional Google OAuth application secret |
 | `CLOUDFLARE_OAUTH_CLIENT_ID` | no | Optional Cloudflare OAuth application client ID |
 | `CLOUDFLARE_OAUTH_CLIENT_SECRET` | no | Optional Cloudflare OAuth application secret |
+| `CONFLUENCE_CLIENT_ID` | no | Optional Atlassian OAuth application client ID |
+| `CONFLUENCE_CLIENT_SECRET` | no | Optional Atlassian OAuth application secret |
+| `LINEAR_CLIENT_ID` | no | Optional Linear OAuth application client ID |
+| `LINEAR_CLIENT_SECRET` | no | Optional Linear OAuth application secret |
 
 The supervisor removes `LAB_AUTH_PASSWORD` and `LAB_AUTH_USERNAME` from the workerd child process
 environment. It also strips the outer `Authorization` header before proxying requests to Workers.
+
+## OAuth Gateways
+
+The Cloudflare, GitHub, Google, Linear, and Confluence Gatekeeper Workers are already included in the
+workerd graph. Each provider nevertheless requires an OAuth application owned by the deployment
+operator. A public Railway template cannot safely ship one shared client secret or pre-register the
+unique domain assigned to every installation.
+
+Create the applications with these exact redirect URIs, replacing `<PUBLIC_BASE_URL>` with the
+generated Railway origin and omitting a trailing slash:
+
+| Gateway | Railway variables | OAuth redirect URI |
+|---|---|---|
+| Cloudflare | `CLOUDFLARE_OAUTH_CLIENT_ID`, `CLOUDFLARE_OAUTH_CLIENT_SECRET` | `<PUBLIC_BASE_URL>/gatekeeper/cloudflare/oauth` |
+| GitHub | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | `<PUBLIC_BASE_URL>/gatekeeper/github/oauth` |
+| Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `<PUBLIC_BASE_URL>/gatekeeper/google/oauth` |
+| Linear | `LINEAR_CLIENT_ID`, `LINEAR_CLIENT_SECRET` | `<PUBLIC_BASE_URL>/gatekeeper/linear/oauth` |
+| Confluence | `CONFLUENCE_CLIENT_ID`, `CONFLUENCE_CLIENT_SECRET` | `<PUBLIC_BASE_URL>/gatekeeper/confluence/oauth` |
+
+Set both variables for a gateway and redeploy the service. `scripts/run-dev-server.ts` injects them
+only into that Gatekeeper Worker's generated Wrangler configuration; the Workshop backend does not
+receive them. Home Assistant asks each user for their own instance credentials, and MCP Server asks
+for an endpoint, so neither needs deployment OAuth variables. The Email Gatekeeper Worker is
+present, but inbound mail requires Cloudflare Email Routing and is not supported by this Railway
+runtime.
 
 ## First Deployment
 
