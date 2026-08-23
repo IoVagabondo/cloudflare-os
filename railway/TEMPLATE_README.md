@@ -23,6 +23,8 @@ No Cloudflare deployment runs automatically. Operations are serialized, subproce
 - Keep Cloudflare credentials in Railway variables instead of a developer laptop.
 - Maintain a community template with transparent architecture and a supportable upgrade path.
 
+## Dependencies for Cloudflare OS Hosting
+
 ### Deployment Dependencies
 
 - A Railway project for the operator service.
