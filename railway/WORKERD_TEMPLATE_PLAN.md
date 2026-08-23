@@ -43,6 +43,28 @@ B0 deliberately uses Cloudflare's development simulator. Its purpose is to estab
 measure memory and startup behavior, test state persistence, and discover missing bindings. It is not
 eligible for marketplace publication as a production template.
 
+### Gateway setup TODO
+
+- [ ] Add an admin-only Gateway Setup panel inside Cloudflare OS so a standalone deployment can
+  configure provider OAuth applications without editing Railway service variables or redeploying.
+- [ ] Keep deployment environment credentials as a supported, higher-priority override, but store
+  UI-entered credentials in a Gatekeeper-owned persistent configuration object rather than the
+  Workshop's soft `AdminConfig` or a browser-readable value.
+- [ ] Show configured/unconfigured status without ever returning a stored client secret, and support
+  explicit rotation and deletion with typed audit events that contain no credential values.
+- [ ] For Linear, generate a one-click OAuth application-manifest link containing the deployment's
+  exact `/gatekeeper/linear/oauth` callback, then accept the resulting client ID in the admin panel.
+- [ ] Implement Linear PKCE so self-hosted deployments do not need to persist a Linear client secret;
+  retain the confidential-client flow as a compatibility fallback.
+- [ ] Add equivalent guided setup for GitHub, Google, Cloudflare, and Confluence, reflecting each
+  provider's app-console and callback requirements rather than pretending those apps can be minted
+  automatically.
+- [ ] Keep runtime-configured connectors out of authentication/sign-in configuration unless a
+  separate, immutable operator policy explicitly permits them; a compromised admin session must not
+  be able to replace a login provider.
+- [ ] Verify admin authorization, secret non-disclosure, rotation, restart/redeploy persistence,
+  OAuth callback correctness, and environment-override precedence in unit and workerd tests.
+
 ### Stage B1: direct workerd distribution
 
 Replace the development host with a generated, pinned `workerd` configuration and production Worker
