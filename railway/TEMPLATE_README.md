@@ -1,4 +1,4 @@
-# Deploy and Manage Cloudflare OS with Railway
+# Deploy and Host Cloudflare OS with Railway
 
 Cloudflare OS Operator is a community deployment console for a pinned, self-hosted Cloudflare OS release. Railway hosts the authenticated operator; the Cloudflare OS runtime stays in your Cloudflare account, where its Workers, Durable Objects, Dynamic Workers, KV, R2, Browser Rendering, AI Gateway, and Gatekeepers are supported.
 
@@ -23,7 +23,7 @@ No Cloudflare deployment runs automatically. Operations are serialized, subproce
 - Keep Cloudflare credentials in Railway variables instead of a developer laptop.
 - Maintain a community template with transparent architecture and a supportable upgrade path.
 
-## Dependencies for Cloudflare OS Hosting
+### Deployment Dependencies
 
 - A Railway project for the operator service.
 - A Cloudflare account with access to Workers, KV, R2, Browser Rendering, Dynamic Worker Loaders, and the optional AI products you enable.
