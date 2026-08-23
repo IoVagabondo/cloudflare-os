@@ -9,12 +9,31 @@ import {
 
 export default defineRailway(() => {
   const state = volume("Cloudflare OS State", {
-    region: "europe-west4",
+    // Railway normalizes the legacy europe-west4 alias to this current volume region. Keeping the
+    // concrete region avoids an IaC plan trying to replace a populated volume on a later apply.
+    region: "europe-west4-drams3a",
     sizeMB: 1024,
   });
 
   const lab = service("Cloudflare OS Workerd Lab", {
     source: github("IoVagabondo/cloudflare-os", { branch: "railway-workerd" }),
+    build: {
+      builder: "DOCKERFILE",
+      dockerfilePath: "/Dockerfile",
+      watchPatterns: [
+        "/Dockerfile",
+        "/.dockerignore",
+        "/package.json",
+        "/pnpm-lock.yaml",
+        "/pnpm-workspace.yaml",
+        "/vite.config.ts",
+        "/tsconfig.json",
+        "/scripts/**",
+        "/packages/**",
+        "/railway/workerd/entrypoint.sh",
+        "/railway/workerd/supervisor.mjs",
+      ],
+    },
     healthcheck: "/healthz",
     healthcheckTimeout: 600,
     replicas: { "europe-west4": 1 },

@@ -116,6 +116,7 @@ then starts Wrangler with `--ip 127.0.0.1 --persist-to /data`.
 The public supervisor listens on Railway's `PORT`; workerd never binds directly to the public
 interface. `/healthz` is deliberately public, contains no secrets, and returns 200 only after the
 internal runtime accepts connections. All other HTTP and WebSocket traffic requires Basic auth.
+The generated Railway domain must target port `3000`; create it after applying the project IaC.
 
 ## Why Deploy the Workerd Lab on Railway?
 
