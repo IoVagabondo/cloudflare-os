@@ -43,7 +43,7 @@ Configure a generated public Railway domain and set these variables on the opera
 | `OPERATOR_PASSWORD` | yes | `${{secret(32)}}`; console username is `admin` |
 | `CLOUDFLARE_API_TOKEN` | yes | User-provided secret; do not provide a default |
 | `CLOUDFLARE_ACCOUNT_ID` | yes | User's 32-character account ID |
-| `CLOUDFLARE_OS_PREFIX` | yes | `cfos-${{secret(6, "abcdefghijklmnopqrstuvwxyz0123456789")}}`; permanent Worker identity prefix |
+| `CLOUDFLARE_OS_PREFIX` | yes | `cfos-${{randomInt(100000,999999)}}`; permanent Worker identity prefix |
 | `CLOUDFLARE_OS_PUBLIC_URL` | yes | Exact Access-protected HTTPS origin |
 | `CLOUDFLARE_ACCESS_ISSUER` | yes | Exact team origin, no path |
 | `CLOUDFLARE_ACCESS_AUDIENCE` | yes | Audience tag from the self-hosted Access application |
