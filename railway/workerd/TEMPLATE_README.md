@@ -1,4 +1,4 @@
-# Deploy and Host Cloudflare OS Workerd Lab
+# Deploy and Host Cloudflare OS Workerd Lab on Railway
 
 Cloudflare OS Workerd Lab is a community experiment that runs the Cloudflare OS Worker topology
 directly on Railway through the lockfile-pinned Wrangler and `workerd` runtime. Unlike Cloudflare OS
@@ -118,7 +118,7 @@ interface. `/healthz` is deliberately public, contains no secrets, and returns 2
 internal runtime accepts connections. All other HTTP and WebSocket traffic requires Basic auth.
 The generated Railway domain must target port `3000`; create it after applying the project IaC.
 
-## Why Deploy the Workerd Lab on Railway?
+## Why Deploy Cloudflare OS Workerd Lab on Railway?
 
 Railway supplies a reproducible Docker build, public TLS endpoint, persistent volume, health-gated
 deployments, logs, and resource metrics. This makes it a useful portability test bed while the
